@@ -167,8 +167,8 @@ Dataset* DatasetLoader::LoadFromFile(const char* filename, const char* initscore
   auto dataset = std::unique_ptr<Dataset>(new Dataset());
   data_size_t num_global_data = 0;
   std::vector<data_size_t> used_data_indices;
-  auto bin_filename = CheckCanLoadFromBin(filename);
-  if (bin_filename.size() == 0) {
+  auto uri = CheckCanLoadFromBin(filename);
+  if (uri.empty()) {
     auto parser = std::unique_ptr<Parser>(Parser::CreateParser(filename, io_config_.has_header, 0, label_idx_));
     if (parser == nullptr) {
       Log::Fatal("Could not recognize data format of %s", filename);
@@ -207,7 +207,7 @@ Dataset* DatasetLoader::LoadFromFile(const char* filename, const char* initscore
     }
   } else {
     // load data from binary file
-    dataset.reset(LoadFromBinFile(filename, bin_filename.c_str(), rank, num_machines, &num_global_data, &used_data_indices));
+    dataset.reset(LoadFromBinFile(uri, rank, num_machines, &num_global_data, &used_data_indices));
   }
   // check meta data
   dataset->metadata_.CheckOrPartition(num_global_data, used_data_indices);
@@ -222,8 +222,8 @@ Dataset* DatasetLoader::LoadFromFileAlignWithOtherDataset(const char* filename, 
   data_size_t num_global_data = 0;
   std::vector<data_size_t> used_data_indices;
   auto dataset = std::unique_ptr<Dataset>(new Dataset());
-  auto bin_filename = CheckCanLoadFromBin(filename);
-  if (bin_filename.size() == 0) {
+  auto uri = CheckCanLoadFromBin(filename);
+  if (uri.empty()) {
     auto parser = std::unique_ptr<Parser>(Parser::CreateParser(filename, io_config_.has_header, 0, label_idx_));
     if (parser == nullptr) {
       Log::Fatal("Could not recognize data format of %s", filename);
@@ -254,7 +254,7 @@ Dataset* DatasetLoader::LoadFromFileAlignWithOtherDataset(const char* filename, 
     }
   } else {
     // load data from binary file
-    dataset.reset(LoadFromBinFile(filename, bin_filename.c_str(), 0, 1, &num_global_data, &used_data_indices));
+    dataset.reset(LoadFromBinFile(uri, 0, 1, &num_global_data, &used_data_indices));
   }
   // not need to check validation data
   // check meta data
@@ -262,12 +262,12 @@ Dataset* DatasetLoader::LoadFromFileAlignWithOtherDataset(const char* filename, 
   return dataset.release();
 }
 
-Dataset* DatasetLoader::LoadFromBinFile(const char* data_filename, const char* bin_filename, int rank, int num_machines, int* num_global_data, std::vector<data_size_t>* used_data_indices) {
+Dataset* DatasetLoader::LoadFromBinFile(const Uri& uri, int rank, int num_machines, int* num_global_data, std::vector<data_size_t>* used_data_indices) {
   auto dataset = std::unique_ptr<Dataset>(new Dataset());
-  auto reader = VirtualFileReader::Make(bin_filename);
-  dataset->data_filename_ = data_filename;
+  auto reader = VirtualFileReader::Make(uri);
+  dataset->data_filename_ = uri.uri;
   if (!reader->Init()) {
-    Log::Fatal("Could not read binary data from %s", bin_filename);
+    Log::Fatal("Could not read binary data from %s", uri.name.c_str());
   }
 
   // buffer to read binary file
@@ -1058,17 +1058,16 @@ void DatasetLoader::ExtractFeaturesFromFile(const char* filename, const Parser* 
 }
 
 /*! \brief Check can load from binary file */
-std::string DatasetLoader::CheckCanLoadFromBin(const char* filename) {
-  std::string bin_filename(filename);
-  bin_filename.append(".bin");
+Uri DatasetLoader::CheckCanLoadFromBin(const char* filename) {
+  Uri uri(filename, ".bin");
 
-  auto reader = VirtualFileReader::Make(bin_filename.c_str());
+  auto reader = VirtualFileReader::Make(uri);
 
   if (!reader->Init()) {
-    bin_filename = std::string(filename);
-    reader = VirtualFileReader::Make(bin_filename.c_str());
+    uri = Uri(filename);
+    reader = VirtualFileReader::Make(uri);
     if (!reader->Init()) {
-      Log::Fatal("cannot open data file %s", bin_filename.c_str());
+      Log::Fatal("cannot open data file %s", uri.name.c_str());
     }
   }
 
@@ -1079,9 +1078,9 @@ std::string DatasetLoader::CheckCanLoadFromBin(const char* filename) {
   size_t read_cnt = reader->Read(buffer.data(), size_of_token);
   if (read_cnt == size_of_token
       && std::string(buffer.data()) == std::string(Dataset::binary_file_token)) {
-    return bin_filename;
+    return uri;
   } else {
-    return std::string();
+    return Uri("");
   }
 
 }

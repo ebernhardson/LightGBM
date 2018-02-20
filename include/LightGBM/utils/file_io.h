@@ -5,6 +5,22 @@
 
 namespace LightGBM{
 
+struct Uri {
+  Uri(const char* uri_) : name(uri_), uri(uri_), suffix("") {}
+  Uri(const std::string& uri_) : name(uri_), uri(uri_), suffix("") {}
+  Uri(const std::string& uri_, const std::string& suffix_) : name(uri_), uri(uri_), suffix(suffix_) {
+      name.append(suffix);
+  }
+
+  std::string name;
+  std::string uri;
+  std::string suffix;
+
+  inline bool empty() const {
+    return uri.empty();
+  }
+};
+
 /*!
  * \brief An interface for writing files from buffers
  */
@@ -24,16 +40,16 @@ struct VirtualFileWriter {
   virtual size_t Write(const void* data, size_t bytes) const = 0;
   /*!
    * \brief Create appropriate writer for filename
-   * \param filename Filename of the data
+   * \param uri Filename of the data
    * \return File writer instance
    */
-  static std::unique_ptr<VirtualFileWriter> Make(const std::string& filename);
+  static std::unique_ptr<VirtualFileWriter> Make(const Uri& filename);
   /*!
    * \brief Check filename existence
-   * \param filename Filename of the data
+   * \param uri Filename of the data
    * \return True when the file exists
    */
-  static bool Exists(const std::string& filename);
+  static bool Exists(const Uri& uri);
 };
 
 /**
@@ -62,7 +78,7 @@ struct VirtualFileReader {
    * \param filename Filename of the data
    * \return File reader instance
    */
-  static std::unique_ptr<VirtualFileReader> Make(const std::string& filename);
+  static std::unique_ptr<VirtualFileReader> Make(const Uri& filename);
 };
 
 }  // namespace LightGBM

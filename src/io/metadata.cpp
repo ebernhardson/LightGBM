@@ -369,10 +369,9 @@ void Metadata::SetQuery(const data_size_t* query, data_size_t len) {
 
 void Metadata::LoadWeights() {
   num_weights_ = 0;
-  std::string weight_filename(data_filename_);
   // default weight file name
-  weight_filename.append(".weight");
-  TextReader<size_t> reader(weight_filename.c_str(), false);
+  Uri uri(data_filename_, ".weight");
+  TextReader<size_t> reader(uri, false);
   reader.ReadAllLines();
   if (reader.Lines().empty()) {
     return;
@@ -391,13 +390,12 @@ void Metadata::LoadWeights() {
 
 void Metadata::LoadInitialScore(const char* initscore_file) {
   num_init_score_ = 0;
-  std::string init_score_filename(initscore_file);
-  if (init_score_filename.size() <= 0) {
-    init_score_filename = std::string(data_filename_);
+  Uri uri(initscore_file);
+  if (uri.empty()) {
     // default weight file name
-    init_score_filename.append(".init");
+      uri = Uri(data_filename_, ".init");
   }
-  TextReader<size_t> reader(init_score_filename.c_str(), false);
+  TextReader<size_t> reader(uri, false);
   reader.ReadAllLines();
   if (reader.Lines().empty()) {
     return;
@@ -437,10 +435,9 @@ void Metadata::LoadInitialScore(const char* initscore_file) {
 
 void Metadata::LoadQueryBoundaries() {
   num_queries_ = 0;
-  std::string query_filename(data_filename_);
   // default query file name
-  query_filename.append(".query");
-  TextReader<size_t> reader(query_filename.c_str(), false);
+  Uri uri(data_filename_, ".query");
+  TextReader<size_t> reader(uri, false);
   reader.ReadAllLines();
   if (reader.Lines().empty()) {
     return;

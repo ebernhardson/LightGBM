@@ -31,7 +31,7 @@ public:
 
 private:
 
-  Dataset* LoadFromBinFile(const char* data_filename, const char* bin_filename, int rank, int num_machines, int* num_global_data, std::vector<data_size_t>* used_data_indices);
+  Dataset* LoadFromBinFile(const Uri& uri, int rank, int num_machines, int* num_global_data, std::vector<data_size_t>* used_data_indices);
 
   void SetHeader(const char* filename);
 
@@ -52,7 +52,7 @@ private:
   void ExtractFeaturesFromFile(const char* filename, const Parser* parser, const std::vector<data_size_t>& used_data_indices, Dataset* dataset);
 
   /*! \brief Check can load from binary file */
-  std::string CheckCanLoadFromBin(const char* filename);
+  Uri CheckCanLoadFromBin(const char* filename);
 
   const IOConfig& io_config_;
   /*! \brief Random generator*/

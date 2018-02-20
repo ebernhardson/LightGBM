@@ -744,7 +744,7 @@ void GPUTreeLearner::InitGPU(int platform_id, int device_id) {
   }
   ctx_ = boost::compute::context(dev_);
   queue_ = boost::compute::command_queue(ctx_, dev_);
-  Log::Info("Using GPU Device: %s, Vendor: %s", dev_.name().c_str(), dev_.vendor().c_str());
+  Log::Info("Using GPU Device: %s, Vendor: %s", dev_.name.c_str(), dev_.vendor().c_str());
   BuildGPUKernels();
   AllocateGPUMemory();
   // setup GPU kernel arguments after we allocating all the buffers

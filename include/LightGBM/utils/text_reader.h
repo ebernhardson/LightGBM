@@ -22,15 +22,15 @@ class TextReader {
 public:
   /*!
   * \brief Constructor
-  * \param filename Filename of data
+  * \param uri Filename of data
   * \param is_skip_first_line True if need to skip header
   */
-  TextReader(const char* filename, bool is_skip_first_line):
-    filename_(filename), is_skip_first_line_(is_skip_first_line){
+  TextReader(const Uri& uri, bool is_skip_first_line):
+    uri_(uri), is_skip_first_line_(is_skip_first_line){
     if (is_skip_first_line_) {
-      auto reader = VirtualFileReader::Make(filename);
+      auto reader = VirtualFileReader::Make(uri);
       if (!reader->Init()) {
-        Log::Fatal("Could not open %s", filename);
+        Log::Fatal("Could not open %s", uri.name.c_str());
       }
       std::stringstream str_buf;
       char read_c;
@@ -52,7 +52,7 @@ public:
         ++skip_bytes_;
       }
       first_line_ = str_buf.str();
-      Log::Debug("Skipped header \"%s\" in file %s", first_line_.c_str(), filename_);
+      Log::Debug("Skipped header \"%s\" in file %s", first_line_.c_str(), uri_.name.c_str());
     }
   }
   /*!
@@ -83,7 +83,7 @@ public:
   INDEX_T ReadAllAndProcess(const std::function<void(INDEX_T, const char*, size_t)>& process_fun) {
     last_line_ = "";
     INDEX_T total_cnt = 0;
-    PipelineReader::Read(filename_, skip_bytes_,
+    PipelineReader::Read(uri_, skip_bytes_,
       [this, &total_cnt, &process_fun]
     (const char* buffer_process, size_t read_cnt) {
       size_t cnt = 0;
@@ -122,7 +122,7 @@ public:
     });
     // if last line of file doesn't contain end of line
     if (last_line_.size() > 0) {
-      Log::Info("Warning: last line of %s has no end of line, still using this line", filename_);
+      Log::Info("Warning: last line of %s has no end of line, still using this line", uri_.name.c_str());
       process_fun(total_cnt, last_line_.c_str(), last_line_.size());
       ++total_cnt;
       last_line_ = "";
@@ -144,7 +144,7 @@ public:
   std::vector<char> ReadContent(size_t* out_len) {
     std::vector<char> ret;
     *out_len = 0;
-    auto reader = VirtualFileReader::Make(filename_);
+    auto reader = VirtualFileReader::Make(uri_);
     if (!reader->Init()) {
       return ret;
     }
@@ -229,7 +229,7 @@ public:
     last_line_ = "";
     INDEX_T total_cnt = 0;
     INDEX_T used_cnt = 0;
-    PipelineReader::Read(filename_, skip_bytes_,
+    PipelineReader::Read(uri_, skip_bytes_,
       [this, &total_cnt, &process_fun,&used_cnt, &filter_fun]
     (const char* buffer_process, size_t read_cnt) {
       size_t cnt = 0;
@@ -277,7 +277,7 @@ public:
     });
     // if last line of file doesn't contain end of line
     if (last_line_.size() > 0) {
-      Log::Info("Warning: last line of %s has no end of line, still using this line", filename_);
+      Log::Info("Warning: last line of %s has no end of line, still using this line", uri_.name.c_str());
       if (filter_fun(used_cnt, total_cnt)) {
         lines_.push_back(last_line_);
         process_fun(used_cnt, lines_);
@@ -308,7 +308,7 @@ public:
 
 private:
   /*! \brief Filename of text data */
-  const char* filename_;
+  const Uri uri_;
   /*! \brief Cache the read text data */
   std::vector<std::string> lines_;
   /*! \brief Buffer for last line */

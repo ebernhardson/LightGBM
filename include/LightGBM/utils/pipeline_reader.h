@@ -20,11 +20,11 @@ class PipelineReader {
 public:
   /*!
   * \brief Read data from a file, use pipeline methods
-  * \param filename Filename of data
+  * \param uri Filename of data
   * \process_fun Process function
   */
-  static size_t Read(const char* filename, int skip_bytes, const std::function<size_t (const char*, size_t)>& process_fun) {
-    auto reader = VirtualFileReader::Make(filename);
+  static size_t Read(const Uri& uri, int skip_bytes, const std::function<size_t (const char*, size_t)>& process_fun) {
+    auto reader = VirtualFileReader::Make(uri);
     if (!reader->Init()) {
       return 0;
     }

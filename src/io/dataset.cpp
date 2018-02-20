@@ -516,24 +516,23 @@ void Dataset::SaveBinaryFile(const char* bin_filename) {
     return;
   }
   // if not pass a filename, just append ".bin" of original file
-  std::string bin_filename_str(data_filename_);
-  if (bin_filename == nullptr || bin_filename[0] == '\0') {
-    bin_filename_str.append(".bin");
-    bin_filename = bin_filename_str.c_str();
+  Uri uri(bin_filename);
+  if (uri.empty()) {
+    uri = Uri(data_filename_, ".bin");
   }
   bool is_file_existed = false;
 
-  if (VirtualFileWriter::Exists(bin_filename)) {
+  if (VirtualFileWriter::Exists(uri)) {
     is_file_existed = true;
-    Log::Warning("File %s existed, cannot save binary to it", bin_filename);
+    Log::Warning("File %s existed, cannot save binary to it", uri.name.c_str());
   }
 
   if (!is_file_existed) {
-    auto writer = VirtualFileWriter::Make(bin_filename);
+    auto writer = VirtualFileWriter::Make(uri);
     if (!writer->Init()) {
-      Log::Fatal("Cannot write binary data to %s ", bin_filename);
+      Log::Fatal("Cannot write binary data to %s ", uri.name.c_str());
     }
-    Log::Info("Saving data to binary file %s", bin_filename);
+    Log::Info("Saving data to binary file %s", uri.name.c_str());
     size_t size_of_token = std::strlen(binary_file_token);
     writer->Write(binary_file_token, size_of_token);
     // get size of header
